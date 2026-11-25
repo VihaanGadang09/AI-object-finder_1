@@ -2,6 +2,7 @@ video = "";
 status = "";
 input_value = "";
 objects = [];
+detecting = false;  // true while the model is busy, so we don't send 60 requests a second
 
 function setup(){
     canvas = createCanvas(480, 380);
@@ -16,7 +17,10 @@ function draw(){
     image(video, 0, 0, 480, 380);
 
     if(status != ""){
-        objectDetector.detect(video, gotResult);
+        if(!detecting){
+            detecting = true;
+            objectDetector.detect(video, gotResult);
+        }
 
         for(i = 0; i < objects.length; i++){
             document.getElementById("status").innerHTML = "Status: Objects Detected";
@@ -29,7 +33,7 @@ function draw(){
 
             if(objects[i].label == input_value){
                 video.stop();
-                objectDetector.detect(gotResult);
+                status = "";  // stop detecting once the object has been found
                 document.getElementById("object_status").innerHTML = input_value + " found!";
                 synth = window.speechSynthesis;
                 utterThis = new SpeechSynthesisUtterance(input_value + " found");
@@ -43,8 +47,10 @@ function draw(){
 }
 
 function gotResult(error, results){
+    detecting = false;
     if(error){
         console.log(error);
+        return;
     }
     console.log(results);
     objects = results;
